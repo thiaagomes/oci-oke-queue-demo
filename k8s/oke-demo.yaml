@@ -1,0 +1,119 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: oci-demo
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: oci-demo-sa
+  namespace: oci-demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-api
+  namespace: oci-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-api
+  template:
+    metadata:
+      labels:
+        app: backend-api
+    spec:
+      serviceAccountName: oci-demo-sa
+      containers:
+        - name: api
+          image: ${IMAGE_URI}
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 8080
+          env:
+            - name: APP_MODE
+              value: oci
+            - name: OCI_REGION
+              value: sa-saopaulo-1
+            - name: OCI_QUEUE_ID
+              value: ocid1.queue.oc1.sa-saopaulo-1.amaaaaaamdhcq2qaqozm3naljbrwnzii6od2litnbe3mo73ldtrop6qdnmja
+            - name: OCI_QUEUE_MESSAGES_ENDPOINT
+              value: https://cell-1.queue.messaging.sa-saopaulo-1.oci.oraclecloud.com
+            - name: OCI_OBJECT_STORAGE_NAMESPACE
+              value: grxcimpmt7ck
+            - name: OCI_OBJECT_STORAGE_BUCKET
+              value: bucket
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            initialDelaySeconds: 15
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: backend-api
+  namespace: oci-demo
+spec:
+  type: ClusterIP
+  selector:
+    app: backend-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backend-worker
+  namespace: oci-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: backend-worker
+  template:
+    metadata:
+      labels:
+        app: backend-worker
+    spec:
+      serviceAccountName: oci-demo-sa
+      containers:
+        - name: worker
+          image: ${IMAGE_URI}
+          imagePullPolicy: Always
+          command: ["npm", "run", "worker"]
+          env:
+            - name: APP_MODE
+              value: oci
+            - name: OCI_REGION
+              value: sa-saopaulo-1
+            - name: OCI_QUEUE_ID
+              value: ocid1.queue.oc1.sa-saopaulo-1.amaaaaaamdhcq2qaqozm3naljbrwnzii6od2litnbe3mo73ldtrop6qdnmja
+            - name: OCI_QUEUE_MESSAGES_ENDPOINT
+              value: https://cell-1.queue.messaging.sa-saopaulo-1.oci.oraclecloud.com
+            - name: OCI_OBJECT_STORAGE_NAMESPACE
+              value: grxcimpmt7ck
+            - name: OCI_OBJECT_STORAGE_BUCKET
+              value: bucket
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi

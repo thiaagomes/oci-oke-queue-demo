@@ -1,0 +1,25 @@
+version: 0.1
+component: build
+timeoutInSeconds: 1800
+runAs: root
+shell: bash
+
+steps:
+  - type: Command
+    name: Validate application
+    command: |
+      cd "${OCI_PRIMARY_SOURCE_DIR}/backend"
+      npm ci
+      node --check src/server.js
+      node --check src/worker.js
+
+  - type: Command
+    name: Build backend image
+    command: |
+      cd "${OCI_PRIMARY_SOURCE_DIR}/backend"
+      docker build -t oci-queue-demo-api:build .
+
+outputArtifacts:
+  - name: backend-image
+    type: DOCKER_IMAGE
+    location: oci-queue-demo-api:build

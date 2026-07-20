@@ -3,9 +3,10 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-"scripts": {
-  "start": "node src/server.js",
-  "dev": "node --watch src/server.js"
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "worker": "node src/worker.js"
   },
   "keywords": [],
   "author": "",
@@ -13,6 +14,9 @@
   "type": "commonjs",
   "dependencies": {
     "cors": "^2.8.6",
-    "express": "^5.2.1"
+    "express": "^5.2.1",
+    "oci-common": "^2.137.0",
+    "oci-objectstorage": "^2.137.0",
+    "oci-queue": "^2.137.0"
   }
 }
