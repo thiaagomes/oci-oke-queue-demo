@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>OCI Queue Report Demo</title>
+
+  <style>
+    :root {
+      color-scheme: dark;
+      font-family: Inter, Arial, sans-serif;
+      background: #09090b;
+      color: #fafafa;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(circle at top left, rgba(244, 78, 36, 0.18), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(54, 103, 173, 0.18), transparent 40%),
+        #09090b;
+    }
+
+    header {
+      border-bottom: 1px solid #27272a;
+      background: rgba(9, 9, 11, 0.85);
+      backdrop-filter: blur(12px);
+    }
+
+    .header-content,
+    main {
+      width: min(1050px, calc(100% - 40px));
+      margin: 0 auto;
+    }
+
+    .header-content {
+      padding: 22px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .brand h1 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .brand p {
+      margin: 5px 0 0;
+      color: #a1a1aa;
+      font-size: 14px;
+    }
+
+    .health {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: #a1a1aa;
+      font-size: 14px;
+    }
+
+    .health-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #71717a;
+    }
+
+    .health-dot.online {
+      background: #22c55e;
+      box-shadow: 0 0 12px rgba(34, 197, 94, 0.8);
+    }
+
+    .health-dot.offline {
+      background: #ef4444;
+    }
+
+    main {
+      padding: 48px 0;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .card {
+      background: rgba(24, 24, 27, 0.92);
+      border: 1px solid #3f3f46;
+      border-radius: 18px;
+      padding: 28px;
+      box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+    }
+
+    .card h2 {
+      margin: 0 0 8px;
+      font-size: 20px;
+    }
+
+    .description {
+      margin: 0 0 24px;
+      color: #a1a1aa;
+      line-height: 1.5;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      color: #d4d4d8;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    input {
+      width: 100%;
+      margin-bottom: 20px;
+      padding: 13px 14px;
+      border: 1px solid #52525b;
+      border-radius: 10px;
+      background: #18181b;
+      color: #fafafa;
+      font-size: 15px;
+      outline: none;
+    }
+
+    input:focus {
+      border-color: #f97316;
+      box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.15);
+    }
+
+    button {
+      width: 100%;
+      padding: 14px;
+      border: 0;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #f97316, #ea580c);
+      color: white;
+      font-size: 15px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    button:hover {
+      filter: brightness(1.08);
+    }
+
+    button:disabled {
+      cursor: not-allowed;
+      opacity: 0.65;
+    }
+
+    .status-panel {
+      min-height: 330px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .status-badge {
+      align-self: flex-start;
+      padding: 7px 12px;
+      border-radius: 999px;
+      background: #27272a;
+      color: #d4d4d8;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .status-badge.queued,
+    .status-badge.processing {
+      background: rgba(234, 179, 8, 0.16);
+      color: #fde047;
+    }
+
+    .status-badge.completed {
+      background: rgba(34, 197, 94, 0.16);
+      color: #4ade80;
+    }
+
+    .status-badge.failed {
+      background: rgba(239, 68, 68, 0.16);
+      color: #f87171;
+    }
+
+    .result {
+      margin-top: 22px;
+      padding: 18px;
+      border-radius: 12px;
+      background: #09090b;
+      border: 1px solid #27272a;
+      line-height: 1.6;
+      overflow-wrap: anywhere;
+    }
+
+    .result p {
+      margin: 6px 0;
+    }
+
+    .label {
+      color: #a1a1aa;
+      font-size: 13px;
+    }
+
+    .value {
+      color: #fafafa;
+    }
+
+    .flow {
+      grid-column: 1 / -1;
+    }
+
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .flow-step {
+      padding: 15px 10px;
+      border: 1px solid #3f3f46;
+      border-radius: 10px;
+      background: #18181b;
+      text-align: center;
+      color: #d4d4d8;
+      font-size: 13px;
+    }
+
+    .flow-step strong {
+      display: block;
+      margin-bottom: 5px;
+      color: #f97316;
+    }
+
+    @media (max-width: 760px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+
+      .flow-steps {
+        grid-template-columns: 1fr;
+      }
+
+      .header-content {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="header-content">
+      <div class="brand">
+        <h1>OCI Queue Report Demo</h1>
+        <p>Container Instance → API Gateway → OKE → OCI Queue</p>
+      </div>
+
+      <div class="health">
+        <span id="healthDot" class="health-dot"></span>
+        <span id="healthText">Verificando API...</span>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="card">
+      <h2>Solicitar relatório</h2>
+      <p class="description">
+        Envie uma solicitação para processamento assíncrono no backend executado no OKE.
+      </p>
+
+      <form id="reportForm">
+        <label for="reportName">Nome do relatório</label>
+        <input
+          id="reportName"
+          name="reportName"
+          value="Relatório de vendas OCI"
+          required
+        >
+
+        <label for="requestedBy">Solicitado por</label>
+        <input
+          id="requestedBy"
+          name="requestedBy"
+          value="Thiago"
+          required
+        >
+
+        <button id="submitButton" type="submit">
+          Processar relatório
+        </button>
+      </form>
+    </section>
+
+    <section class="card status-panel">
+      <h2>Status do processamento</h2>
+      <p class="description">
+        O frontend consulta o backend até o consumer concluir o trabalho.
+      </p>
+
+      <span id="statusBadge" class="status-badge">AGUARDANDO</span>
+
+      <div id="result" class="result">
+        <p class="label">Resultado</p>
+        <p class="value">Envie uma solicitação para iniciar a demonstração.</p>
+      </div>
+    </section>
+
+    <section class="card flow">
+      <h2>Fluxo da arquitetura</h2>
+
+      <div class="flow-steps">
+        <div class="flow-step">
+          <strong>1. Frontend</strong>
+          Container Instance
+        </div>
+
+        <div class="flow-step">
+          <strong>2. Entrada</strong>
+          OCI API Gateway
+        </div>
+
+        <div class="flow-step">
+          <strong>3. Producer</strong>
+          API no OKE
+        </div>
+
+        <div class="flow-step">
+          <strong>4. Mensageria</strong>
+          OCI Queue
+        </div>
+
+        <div class="flow-step">
+          <strong>5. Consumer</strong>
+          Worker no OKE
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const API_BASE =
+      "https://czjzhrzz22xvt3tp7zbh4umfai.apigateway.sa-saopaulo-1.oci.customer-oci.com/api";
+
+    const form = document.getElementById("reportForm");
+    const submitButton = document.getElementById("submitButton");
+    const statusBadge = document.getElementById("statusBadge");
+    const result = document.getElementById("result");
+    const healthDot = document.getElementById("healthDot");
+    const healthText = document.getElementById("healthText");
+
+    function updateStatus(status) {
+      const normalized = status.toLowerCase();
+
+      statusBadge.textContent = status;
+      statusBadge.className = `status-badge ${normalized}`;
+    }
+
+    function showJob(job) {
+      result.innerHTML = `
+        <p class="label">Job ID</p>
+        <p class="value">${job.jobId}</p>
+
+        <p class="label">Relatório</p>
+        <p class="value">${job.reportName}</p>
+
+        <p class="label">Solicitado por</p>
+        <p class="value">${job.requestedBy}</p>
+
+        <p class="label">Resultado</p>
+        <p class="value">${job.result || "Processamento em andamento..."}</p>
+      `;
+    }
+
+    async function checkHealth() {
+      try {
+        const response = await fetch(`${API_BASE}/health`);
+
+        if (!response.ok) {
+          throw new Error(`HTTP ${response.status}`);
+        }
+
+        healthDot.className = "health-dot online";
+        healthText.textContent = "API Gateway conectado";
+      } catch (error) {
+        healthDot.className = "health-dot offline";
+        healthText.textContent = "API indisponível";
+      }
+    }
+
+    async function pollJob(jobId) {
+      for (let attempt = 0; attempt < 60; attempt += 1) {
+        const response = await fetch(`${API_BASE}/jobs/${jobId}`);
+
+        if (!response.ok) {
+          throw new Error(`Erro ao consultar o job: HTTP ${response.status}`);
+        }
+
+        const job = await response.json();
+
+        updateStatus(job.status);
+        showJob(job);
+
+        if (job.status === "COMPLETED") {
+          return;
+        }
+
+        if (job.status === "FAILED") {
+          throw new Error(job.result || "O processamento falhou.");
+        }
+
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+
+      throw new Error("Tempo máximo de processamento excedido.");
+    }
+
+    form.addEventListener("submit", async event => {
+      event.preventDefault();
+
+      submitButton.disabled = true;
+      submitButton.textContent = "Enviando...";
+      updateStatus("QUEUED");
+
+      try {
+        const payload = {
+          reportName: document.getElementById("reportName").value.trim(),
+          requestedBy: document.getElementById("requestedBy").value.trim()
+        };
+
+        const response = await fetch(`${API_BASE}/jobs`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+          throw new Error(`Erro ao criar o job: HTTP ${response.status}`);
+        }
+
+        const job = await response.json();
+
+        showJob(job);
+        await pollJob(job.jobId);
+      } catch (error) {
+        updateStatus("FAILED");
+
+        result.innerHTML = `
+          <p class="label">Erro</p>
+          <p class="value">${error.message}</p>
+        `;
+      } finally {
+        submitButton.disabled = false;
+        submitButton.textContent = "Processar novo relatório";
+      }
+    });
+
+    checkHealth();
+  </script>
+</body>
+</html>
