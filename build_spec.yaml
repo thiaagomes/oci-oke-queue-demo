@@ -3,6 +3,11 @@ component: build
 timeoutInSeconds: 1800
 runAs: root
 shell: bash
+failImmediatelyOnError: true
+
+env:
+  exportedVariables:
+    - IMAGE_TAG
 
 steps:
   - type: Command
@@ -17,6 +22,9 @@ steps:
     name: Build backend image
     command: |
       cd "${OCI_PRIMARY_SOURCE_DIR}/backend"
+      IMAGE_TAG="$(echo "${OCI_PRIMARY_SOURCE_COMMIT_HASH}" | cut -c1-12)"
+      export IMAGE_TAG
+      echo "IMAGE_TAG=${IMAGE_TAG}"
       docker build -t oci-queue-demo-api:build .
 
 outputArtifacts:
