@@ -8,6 +8,7 @@ failImmediatelyOnError: true
 env:
   exportedVariables:
     - IMAGE_TAG
+    - IMAGE_URI
 
 steps:
   - type: Command
@@ -23,8 +24,11 @@ steps:
     command: |
       cd "${OCI_PRIMARY_SOURCE_DIR}/backend"
       IMAGE_TAG="$(echo "${OCI_PRIMARY_SOURCE_COMMIT_HASH}" | cut -c1-12)"
+      IMAGE_URI="gru.ocir.io/grxcimpmt7ck/oci-queue-demo-api:${IMAGE_TAG}"
       export IMAGE_TAG
+      export IMAGE_URI
       echo "IMAGE_TAG=${IMAGE_TAG}"
+      echo "IMAGE_URI=${IMAGE_URI}"
       docker build -t oci-queue-demo-api:build .
 
 outputArtifacts:
