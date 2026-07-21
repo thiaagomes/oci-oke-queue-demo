@@ -25,6 +25,7 @@ spec:
         app: backend-api
     spec:
       serviceAccountName: oci-demo-sa
+      automountServiceAccountToken: true
       containers:
         - name: api
           image: ${IMAGE_URI}
@@ -92,6 +93,7 @@ spec:
         app: backend-worker
     spec:
       serviceAccountName: oci-demo-sa
+      automountServiceAccountToken: true
       containers:
         - name: worker
           image: ${IMAGE_URI}
