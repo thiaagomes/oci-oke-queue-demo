@@ -20,7 +20,7 @@ function getOciClients() {
   }
 
   const provider =
-    common.OkeWorkloadIdentityAuthenticationDetailsProvider.builder().build();
+    common.OkeWorkloadIdentityAuthenticationDetailsProvider.builder();
 
   const queueClient = new queue.QueueClient({
     authenticationDetailsProvider: provider,
